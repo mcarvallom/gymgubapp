@@ -14,15 +14,12 @@ class QRPage extends StatefulWidget {
 
 class _QRPageState extends State<QRPage> {
   String qrData = '';
-  int secondsRemaining = 60;
-  Timer? _timer;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
     super.initState();
     _generateQR();
-    _startTimer();
   }
 
   Future<void> _generateQR() async {
@@ -57,23 +54,9 @@ class _QRPageState extends State<QRPage> {
     }
   }
 
-  void _startTimer() {
-    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
-      setState(() {
-        secondsRemaining--;
-        if (secondsRemaining <= 0) {
-          secondsRemaining = 60;
-          _generateQR();
-        }
-      });
-    });
-  }
 
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -97,11 +80,7 @@ class _QRPageState extends State<QRPage> {
                     : Text('No se pudo generar el código QR'),
           
                   SizedBox(height: 20),
-                  Text(
-                    'Actualizando en: $secondsRemaining segundos',
-                    style: TextStyle(fontSize: 16, color: ThemeAPP.of(context).secondaryText,),
-                    
-                  ),
+                  
                 ],
             ),
           ),
