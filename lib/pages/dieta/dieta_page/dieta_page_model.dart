@@ -6,11 +6,7 @@ import 'dieta_page_widget.dart' show DietaPageWidget;
 import 'package:flutter/material.dart';
 
 class DietaPageModel extends GymHubModel<DietaPageWidget> {
-  ///  State fields for stateful widgets in this page.
-
-  // Model for botonesPaginasNavBar component.
   late BotonesPaginasNavBarModel botonesPaginasNavBarModel;
-  // State field(s) for Calendar widget.
   DateTimeRange? calendarSelectedDay;
 
   @override

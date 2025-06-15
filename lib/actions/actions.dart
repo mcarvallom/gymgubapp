@@ -13,8 +13,8 @@ Future membresia(BuildContext context) async {
       currentUserUid,
     ),
   );
-  FFAppState().estado = membresia.firstOrNull!.estado;
-  if (FFAppState().estado != '047930a7-0dd1-4885-92da-7a849d353e9a') {
+  GHAppState().estado = membresia.firstOrNull!.estado;
+  if (GHAppState().estado != '047930a7-0dd1-4885-92da-7a849d353e9a') {
     showDialog(
       barrierDismissible: false,
       context: context,

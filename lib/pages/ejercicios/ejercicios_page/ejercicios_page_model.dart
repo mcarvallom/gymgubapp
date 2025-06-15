@@ -8,14 +8,10 @@ import 'ejercicios_page_widget.dart' show EjerciciosPageWidget;
 import 'package:flutter/material.dart';
 
 class EjerciciosPageModel extends GymHubModel<EjerciciosPageWidget> {
-  ///  State fields for stateful widgets in this page.
 
-  // Model for botonesPaginasNavBar component.
   late BotonesPaginasNavBarModel botonesPaginasNavBarModel;
-  // State field(s) for Calendar widget.
   DateTimeRange? calendarSelectedDay;
 
-  /// Query cache managers for this widget.
 
   final _ejercicioManager = FutureRequestManager<List<EjerciciosRow>>();
   Future<List<EjerciciosRow>> ejercicio({
@@ -93,7 +89,6 @@ class EjerciciosPageModel extends GymHubModel<EjerciciosPageWidget> {
   void dispose() {
     botonesPaginasNavBarModel.dispose();
 
-    /// Dispose query cache managers for this widget.
 
     clearEjercicioCache();
 

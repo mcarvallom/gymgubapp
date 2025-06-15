@@ -20,7 +20,6 @@ export 'tables/region.dart';
 export 'tables/plan_gimnasio.dart';
 export 'tables/prevision_salud.dart';
 export 'tables/rutinas_diarias.dart';
-export 'tables/ingredientes_dieta.dart';
 export 'tables/remuneracion.dart';
 export 'tables/ejercicios.dart';
 export 'tables/usuario.dart';

@@ -17,8 +17,9 @@ class DietaRow extends SupabaseDataRow {
   int get id => getField<int>('id')!;
   set id(int value) => setField<int>('id', value);
 
-  DateTime get createdAt => getField<DateTime>('created_at')!;
-  set createdAt(DateTime value) => setField<DateTime>('created_at', value);
+  DateTime? get fechaCreacion => getField<DateTime>('fecha_creacion');
+  set fechaCreacion(DateTime? value) =>
+      setField<DateTime>('fecha_creacion', value);
 
   String? get usuarioId => getField<String>('usuario_id');
   set usuarioId(String? value) => setField<String>('usuario_id', value);

@@ -1,0 +1,230 @@
+import 'dart:convert';
+
+import '../../gymhub/uploaded_file.dart';
+import 'package:firebase_vertexai/firebase_vertexai.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+/// Una clase singleton que administra las sesiones de chat para Firebase Vertex AI.
+///
+/// Esta clase mantiene un mapa de sesiones de chat indexadas por ID de hilo y maneja:
+/// - Inicialización de nuevas sesiones de chat con configuraciones de modelo específicas
+/// - Gestión de múltiples sesiones de chat simultáneas
+/// - Envío y recepción de mensajes
+/// - Borrado del historial de chat
+class ChatManager {
+  static final ChatManager _instance = ChatManager._internal();
+  ChatManager._internal();
+  factory ChatManager() => _instance;
+
+// Mapa para almacenar múltiples sesiones de chat con sus ID de hilo
+  final Map<String, ChatSession> _chats = {};
+
+  Future<void> initializeChat(
+    String threadId,
+    Map<String, dynamic> agentJson,
+  ) async {
+    if (!_chats.containsKey(threadId)) {
+      // Crear instancia Vertex AI
+      final vertexAI = FirebaseVertexAI.instanceFor(
+        auth: FirebaseAuth.instance,
+      );
+      final aiModel = agentJson['aiModel'];
+      final responseOptions = agentJson['responseOptions'];
+
+      var systemMessage = (aiModel['messages'] as List<dynamic>)
+              .firstWhere((message) => message['role'] == 'SYSTEM')['text']
+          as String;
+
+      // Añadir instrucciones de formato de respuesta al mensaje del sistema
+      // Nota: Para la salida de datos estructurados, los usuarios deben especificar el formato JSON deseado en las instrucciones del sistema, ya que las respuestas basadas en esquemas aún no son compatibles.  
+      switch (responseOptions['responseType']) {
+        case 'PLAINTEXT':
+          systemMessage +=
+              '\n Proporcione sus respuestas únicamente en formato de texto simple, sin ningún formato especial ni Markdown.';
+          break;
+        case 'MARKDOWN':
+          systemMessage +=
+              '\n Formatee sus respuestas utilizando la sintaxis Markdown para una mejor legibilidad.';
+          break;
+        case 'JSON':
+          systemMessage +=
+              '\n Proporcione sus respuestas en formato JSON válido.';
+          break;
+        default:
+          break;
+      }
+
+      final messages = (aiModel['messages'] as List<dynamic>)
+          .where((message) => message['role'] != 'SYSTEM')
+          .map((message) => Content(
+              message['role'] == 'USER' ? 'user' : 'model',
+              [TextPart(message['text'])]));
+
+      final model = vertexAI.generativeModel(
+        model: aiModel['model'],
+        systemInstruction: Content.system(systemMessage),
+        generationConfig: GenerationConfig(
+          temperature:
+              aiModel['parameters']['temperature']['inputValue'].toDouble(),
+          topP: aiModel['parameters']['topP']['inputValue'].toDouble(),
+          maxOutputTokens:
+              aiModel['parameters']['maxTokens']['inputValue'].toInt(),
+          responseMimeType: responseOptions['responseType'] == 'JSON'
+              ? 'application/json'
+              : null,
+        ),
+      );
+
+      _chats[threadId] = model.startChat(history: messages.toList());
+    }
+  }
+
+  void clearChat(String threadId) {
+    _chats.remove(threadId);
+  }
+
+  Future<dynamic> sendMessage(
+    String userMessage,
+    String threadId,
+    Map<String, dynamic> agentJson, {
+    String? imageUrl,
+    FFUploadedFile? imageAsset,
+    String? audioUrl,
+    FFUploadedFile? audioAsset,
+    String? videoUrl,
+    FFUploadedFile? videoAsset,
+    String? pdfUrl,
+    FFUploadedFile? pdfAsset,
+  }) async {
+    await initializeChat(threadId, agentJson);
+
+    final chat = _chats[threadId];
+    if (chat == null) {
+      throw Exception('No se pudo inicializar la sesión de chat');
+    }
+
+    final Content prompt;
+    final parts = <Part>[TextPart(userMessage)];
+
+    // Add image if provided
+    if (imageAsset != null && imageAsset.bytes?.isNotEmpty == true) {
+      parts.add(InlineDataPart('image/jpeg', imageAsset.bytes!));
+    } else if (imageUrl != null && imageUrl.isNotEmpty) {
+      parts.add(FileData(
+          getMimeTypeFromUrl(imageUrl, defaultMimeType: 'image/jpeg'),
+          imageUrl));
+    }
+
+    // Add audio if provided
+    if (audioAsset != null && audioAsset.bytes?.isNotEmpty == true) {
+      parts.add(InlineDataPart('audio/m4a', audioAsset.bytes!));
+    } else if (audioUrl != null && audioUrl.isNotEmpty) {
+      parts.add(FileData(
+          getMimeTypeFromUrl(audioUrl, defaultMimeType: 'audio/mp3'),
+          audioUrl));
+    }
+
+    // Add video if provided
+    if (videoAsset != null && videoAsset.bytes?.isNotEmpty == true) {
+      parts.add(InlineDataPart('video/mp4', videoAsset.bytes!));
+    } else if (videoUrl != null && videoUrl.isNotEmpty) {
+      parts.add(FileData(
+          getMimeTypeFromUrl(videoUrl, defaultMimeType: 'video/mp4'),
+          videoUrl));
+    }
+
+    // Add PDF if provided
+    if (pdfAsset != null && pdfAsset.bytes?.isNotEmpty == true) {
+      parts.add(InlineDataPart('application/pdf', pdfAsset.bytes!));
+    } else if (pdfUrl != null && pdfUrl.isNotEmpty) {
+      parts.add(FileData(
+          getMimeTypeFromUrl(pdfUrl, defaultMimeType: 'application/pdf'),
+          pdfUrl));
+    }
+
+    // Use Content.multi if we have multiple parts, otherwise just use Content.text
+    prompt =
+        parts.length > 1 ? Content.multi(parts) : Content.text(userMessage);
+
+    final response = await chat.sendMessage(prompt);
+    if (agentJson['responseOptions']['responseType'] == 'JSON') {
+      try {
+        // Parse the response into a JSON object and return it
+        return jsonDecode(response.text!) as Map<String, dynamic>;
+      } catch (e) {
+        print('No se pudo analizar la respuesta JSON: ${response.text}');
+        throw Exception('La respuesta de IA no es un JSON válido');
+      }
+    }
+    return response.text;
+  }
+
+//Intenta determinar el tipo MIME de una URL.
+//Extrae la extensión del archivo de la URL y la asigna al tipo MIME correspondiente. Si la URL no contiene una extensión reconocida o si se produce algún error durante el procesamiento, se utiliza el tipo MIME predeterminado proporcionado.
+
+  String getMimeTypeFromUrl(String url,
+      {String defaultMimeType = 'application/octet-stream'}) {
+    try {
+      // Extract file extension from the URL
+      String extension = url.split('?').first.split('.').last.toLowerCase();
+
+      // Map common file extensions to MIME types
+      switch (extension) {
+        // Imagenes
+        case 'jpg':
+        case 'jpeg':
+          return 'image/jpeg';
+        case 'png':
+          return 'image/png';
+        case 'gif':
+          return 'image/gif';
+        case 'webp':
+          return 'image/webp';
+        case 'svg':
+          return 'image/svg+xml';
+        case 'bmp':
+          return 'image/bmp';
+        case 'tiff':
+        case 'tif':
+          return 'image/tiff';
+
+        // Audio 
+        case 'mp3':
+          return 'audio/mp3';
+        case 'm4a':
+          return 'audio/m4a';
+        case 'wav':
+          return 'audio/wav';
+        case 'ogg':
+          return 'audio/ogg';
+        case 'aac':
+          return 'audio/aac';
+        case 'wma':
+          return 'audio/x-ms-wma';
+        case 'flac':
+          return 'audio/flac';
+
+        // Video 
+        case 'mp4':
+          return 'video/mp4';
+        case 'mov':
+          return 'video/quicktime';
+        case 'avi':
+          return 'video/x-msvideo';
+        case 'wmv':
+          return 'video/x-ms-wmv';
+        case 'flv':
+          return 'video/x-flv';
+        case 'webm':
+          return 'video/webm';
+        case 'mkv':
+          return 'video/x-matroska';
+
+        default:
+          return defaultMimeType;
+      }
+    } catch (e) {
+      return defaultMimeType;
+    }
+  }
+}

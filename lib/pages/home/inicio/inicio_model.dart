@@ -9,12 +9,8 @@ import 'inicio_widget.dart' show InicioWidget;
 import 'package:flutter/material.dart';
 
 class InicioModel extends GymHubModel<InicioWidget> {
-  ///  State fields for stateful widgets in this page.
-
-  // Model for sinejercicios component.
   late SinejerciciosModel sinejerciciosModel;
 
-  /// Query cache managers for this widget.
 
   final _usuarioManager = FutureRequestManager<List<UsuarioRow>>();
   Future<List<UsuarioRow>> usuario({
@@ -133,7 +129,6 @@ class InicioModel extends GymHubModel<InicioWidget> {
   void dispose() {
     sinejerciciosModel.dispose();
 
-    /// Dispose query cache managers for this widget.
 
     clearUsuarioCache();
 

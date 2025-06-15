@@ -93,20 +93,6 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
               : InicioWidget(),
         ),
         FFRoute(
-          name: DetalleDietaWidget.routeName,
-          path: DetalleDietaWidget.routePath,
-          builder: (context, params) => DetalleDietaWidget(
-            dieta: params.getParam(
-              'dieta',
-              ParamType.int,
-            ),
-            dia: params.getParam(
-              'dia',
-              ParamType.String,
-            ),
-          ),
-        ),
-        FFRoute(
           name: IngresoQRWidget.routeName,
           path: IngresoQRWidget.routePath,
           builder: (context, params) => params.isEmpty
@@ -149,7 +135,8 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           name: ResetContrasennaWidget.routeName,
           path: ResetContrasennaWidget.routePath,
           builder: (context, params) => ResetContrasennaWidget(),
-        )
+        ),
+       
       ].map((r) => r.toRoute(appStateNotifier)).toList(),
     );
 

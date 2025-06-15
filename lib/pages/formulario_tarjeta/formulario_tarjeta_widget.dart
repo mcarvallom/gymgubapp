@@ -1726,7 +1726,7 @@ class _FormularioTarjetaWidgetState extends State<FormularioTarjetaWidget> {
                                             containerMembresiaRow?.id,
                                           ),
                                         );
-                                        FFAppState().estado =
+                                        GHAppState().estado =
                                             '047930a7-0dd1-4885-92da-7a849d353e9a';
                                         safeSetState(() {});
 

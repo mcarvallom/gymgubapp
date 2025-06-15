@@ -2,7 +2,7 @@
 export '/pages/home/inicio/inicio_widget.dart' show InicioWidget;
 export '/pages/dieta/detalle_dieta/detalle_dieta_widget.dart'
     show DetalleDietaWidget;
-export '/pages/ingreso_q_r/ingreso_q_r/ingreso_q_r_widget.dart'
+export 'pages/ingreso_qr/ingreso_q_r/ingreso_q_r_widget.dart'
     show IngresoQRWidget;
 export '/pages/perfil/perfil/perfil_widget.dart' show PerfilWidget;
 export '/pages/login/login/login_widget.dart' show LoginWidget;

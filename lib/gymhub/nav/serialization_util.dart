@@ -2,11 +2,14 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:from_css_color/from_css_color.dart';
+import 'package:gymhub_app/backend/supabase/database/tables/comida_ingredientes.dart';
+import 'package:gymhub_app/backend/supabase/database/tables/comidas.dart';
+import 'package:gymhub_app/backend/supabase/database/tables/v_cantidad_plan.dart';
 
 import '/backend/supabase/supabase.dart';
 
-import '../place.dart';
-import '../uploaded_file.dart';
+import '../../gymhub/place.dart';
+import '../../gymhub/uploaded_file.dart';
 
 /// SERIALIZATION HELPERS
 
@@ -211,6 +214,8 @@ dynamic deserializeParam<T>(
             return DietaDiariaRow(data);
           case GeneroRow:
             return GeneroRow(data);
+          case VCantidadPlanRow:
+            return VCantidadPlanRow(data);
           case AfpRow:
             return AfpRow(data);
           case ContratoRow:
@@ -235,16 +240,18 @@ dynamic deserializeParam<T>(
             return PrevisionSaludRow(data);
           case RutinasDiariasRow:
             return RutinasDiariasRow(data);
-          case IngredientesDietaRow:
-            return IngredientesDietaRow(data);
           case RemuneracionRow:
             return RemuneracionRow(data);
+          case ComidaIngredientesRow:
+            return ComidaIngredientesRow(data);
           case EjerciciosRow:
             return EjerciciosRow(data);
           case UsuarioRow:
             return UsuarioRow(data);
           case CategoriaGastoRow:
             return CategoriaGastoRow(data);
+          case ComidasRow:
+            return ComidasRow(data);
           case EquipoGimnasioRow:
             return EquipoGimnasioRow(data);
           case CiudadRow:

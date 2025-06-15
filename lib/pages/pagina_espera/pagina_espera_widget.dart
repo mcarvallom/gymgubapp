@@ -39,7 +39,7 @@ class _PaginaEsperaWidgetState extends State<PaginaEsperaWidget> {
             currentUserUid,
           ),
         );
-        FFAppState().estado = _model.membresia!.firstOrNull!.estado;
+        GHAppState().estado = _model.membresia!.firstOrNull!.estado;
         safeSetState(() {});
         if (_model.membresia?.firstOrNull?.estado ==
             '047930a7-0dd1-4885-92da-7a849d353e9a') {
@@ -99,7 +99,7 @@ class _PaginaEsperaWidgetState extends State<PaginaEsperaWidget> {
 
   @override
   Widget build(BuildContext context) {
-    context.watch<FFAppState>();
+    context.watch<GHAppState>();
 
     return Builder(
       builder: (context) => GestureDetector(

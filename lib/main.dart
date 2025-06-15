@@ -20,7 +20,7 @@ void main() async {
 
   await SupaFlow.initialize();
 
-  final appState = FFAppState(); // Initialize FFAppState
+  final appState = GHAppState(); // Initialize GHAppState
   await appState.initializePersistedState();
 
   runApp(ChangeNotifierProvider(

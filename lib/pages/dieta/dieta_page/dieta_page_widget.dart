@@ -1,3 +1,6 @@
+import 'package:gymhub_app/backend/supabase/database/tables/comidas.dart';
+import 'package:provider/provider.dart';
+
 import '/auth/supabase_auth/auth_util.dart';
 import '/backend/supabase/supabase.dart';
 import '/gymhub/gymhub_calendar.dart';
@@ -42,6 +45,8 @@ class _DietaPageWidgetState extends State<DietaPageWidget> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<GHAppState>();
+
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
@@ -309,10 +314,10 @@ class _DietaPageWidgetState extends State<DietaPageWidget> {
                         ),
                       ),
                       FutureBuilder<List<DietaRow>>(
-                        future: DietaTable().queryRows(
+                        future: DietaTable().querySingleRow(
                           queryFn: (q) => q.eqOrNull(
                             'usuario_id',
-                            currentUserUid,
+                            GHAppState().idUsuario,
                           ),
                         ),
                         builder: (context, snapshot) {
@@ -332,16 +337,19 @@ class _DietaPageWidgetState extends State<DietaPageWidget> {
                           }
                           List<DietaRow> containerDietaRowList = snapshot.data!;
 
+                          final containerDietaRow =
+                              containerDietaRowList.isNotEmpty
+                                  ? containerDietaRowList.first
+                                  : null;
+
                           return Container(
                             decoration: BoxDecoration(),
                             child: FutureBuilder<List<DietaDiariaRow>>(
-                              future: DietaDiariaTable().queryRows(
+                              future: DietaDiariaTable().querySingleRow(
                                 queryFn: (q) => q
-                                    .inFilterOrNull(
+                                    .eqOrNull(
                                       'dieta_id',
-                                      containerDietaRowList
-                                          .map((e) => e.id)
-                                          .toList(),
+                                      containerDietaRow?.id,
                                     )
                                     .eqOrNull(
                                       'dia_semana',
@@ -369,278 +377,245 @@ class _DietaPageWidgetState extends State<DietaPageWidget> {
                                     rutinaEjercicioQuerySingleDietaDiariaRowList =
                                     snapshot.data!;
 
+                                final rutinaEjercicioQuerySingleDietaDiariaRow =
+                                    rutinaEjercicioQuerySingleDietaDiariaRowList
+                                            .isNotEmpty
+                                        ? rutinaEjercicioQuerySingleDietaDiariaRowList
+                                            .first
+                                        : null;
+
                                 return Container(
                                   decoration: BoxDecoration(),
-                                  child: Builder(
-                                    builder: (context) {
-                                      final dietasdiarias =
-                                          rutinaEjercicioQuerySingleDietaDiariaRowList
-                                              .map((e) => e)
-                                              .toList();
-                                      if (dietasdiarias.isEmpty) {
+                                  child: FutureBuilder<List<ComidasRow>>(
+                                    future: ComidasTable().queryRows(
+                                      queryFn: (q) => q.eqOrNull(
+                                        'dieta_diaria_id',
+                                        rutinaEjercicioQuerySingleDietaDiariaRow
+                                            ?.id,
+                                      ),
+                                    ),
+                                    builder: (context, snapshot) {
+                                      // Customize what your widget looks like when it's loading.
+                                      if (!snapshot.hasData) {
+                                        return Center(
+                                          child: SizedBox(
+                                            width: 50.0,
+                                            height: 50.0,
+                                            child: CircularProgressIndicator(
+                                              valueColor:
+                                                  AlwaysStoppedAnimation<Color>(
+                                                GymHubTheme.of(context)
+                                                    .primary,
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                      List<ComidasRow> columnComidasRowList =
+                                          snapshot.data!;
+
+                                      if (columnComidasRowList.isEmpty) {
                                         return SindietaWidget();
                                       }
 
                                       return Column(
                                         mainAxisSize: MainAxisSize.max,
-                                        children:
-                                            List.generate(dietasdiarias.length,
-                                                (dietasdiariasIndex) {
-                                          final dietasdiariasItem =
-                                              dietasdiarias[dietasdiariasIndex];
-                                          return FutureBuilder<List<DietaRow>>(
-                                            future: DietaTable().querySingleRow(
-                                              queryFn: (q) => q.eqOrNull(
-                                                'id',
-                                                dietasdiariasItem.dietaId,
-                                              ),
-                                            ),
-                                            builder: (context, snapshot) {
-                                              // Customize what your widget looks like when it's loading.
-                                              if (!snapshot.hasData) {
-                                                return Center(
-                                                  child: SizedBox(
-                                                    width: 50.0,
-                                                    height: 50.0,
-                                                    child:
-                                                        CircularProgressIndicator(
-                                                      valueColor:
-                                                          AlwaysStoppedAnimation<
-                                                              Color>(
-                                                        GymHubTheme.of(
-                                                                context)
-                                                            .primary,
-                                                      ),
+                                        children: List.generate(
+                                            columnComidasRowList.length,
+                                            (columnIndex) {
+                                          final columnComidasRow =
+                                              columnComidasRowList[columnIndex];
+                                          return ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(10.0),
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                color:
+                                                    GymHubTheme.of(context)
+                                                        .primaryBackground,
+                                                image: DecorationImage(
+                                                  fit: BoxFit.cover,
+                                                  image: Image.network(
+                                                    valueOrDefault<String>(
+                                                      () {
+                                                        if (columnComidasRow
+                                                                .tipoComida ==
+                                                            'Almuerzo') {
+                                                          return 'https://images.unsplash.com/photo-1565895405138-6c3a1555da6a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w0NTYyMDF8MHwxfHNlYXJjaHwxMHx8ZGlldGF8ZW58MHx8fHwxNzQ4OTExODk2fDA&ixlib=rb-4.1.0&q=85';
+                                                        } else if (columnComidasRow
+                                                                .tipoComida ==
+                                                            'Desayuno') {
+                                                          return 'https://images.unsplash.com/photo-1506084868230-bb9d95c24759?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NTYyMDF8MHwxfHNlYXJjaHwxMHx8YnJlYWtmYXN0fGVufDB8fHx8MTcyOTQxNzI4M3ww&ixlib=rb-4.0.3&q=80&w=400';
+                                                        } else if (columnComidasRow
+                                                                .tipoComida ==
+                                                            'Cena') {
+                                                          return 'https://images.unsplash.com/photo-1605926637512-c8b131444a4b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NTYyMDF8MHwxfHNlYXJjaHwxfHxEaW5uZXJ8ZW58MHx8fHwxNzI5NDI1NjYxfDA&ixlib=rb-4.0.3&q=80&w=400';
+                                                        } else {
+                                                          return 'https://images.unsplash.com/photo-1565895405138-6c3a1555da6a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w0NTYyMDF8MHwxfHNlYXJjaHwxMHx8ZGlldGF8ZW58MHx8fHwxNzQ4OTExODk2fDA&ixlib=rb-4.1.0&q=85';
+                                                        }
+                                                      }(),
+                                                      'https://images.unsplash.com/photo-1565895405138-6c3a1555da6a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w0NTYyMDF8MHwxfHNlYXJjaHwxMHx8ZGlldGF8ZW58MHx8fHwxNzQ4OTExODk2fDA&ixlib=rb-4.1.0&q=85',
                                                     ),
-                                                  ),
-                                                );
-                                              }
-                                              List<DietaRow>
-                                                  containerDietaRowList =
-                                                  snapshot.data!;
-
-                                              final containerDietaRow =
-                                                  containerDietaRowList
-                                                          .isNotEmpty
-                                                      ? containerDietaRowList
-                                                          .first
-                                                      : null;
-
-                                              return ClipRRect(
+                                                  ).image,
+                                                ),
                                                 borderRadius:
                                                     BorderRadius.circular(10.0),
-                                                child: Container(
-                                                  decoration: BoxDecoration(
-                                                    color: GymHubTheme.of(
-                                                            context)
-                                                        .primaryBackground,
-                                                    image: DecorationImage(
-                                                      fit: BoxFit.cover,
-                                                      image: Image.network(
-                                                        valueOrDefault<String>(
-                                                          () {
-                                                            if (containerDietaRow
-                                                                    ?.tipo ==
-                                                                'Almuerzo') {
-                                                              return 'https://images.unsplash.com/photo-1565895405138-6c3a1555da6a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w0NTYyMDF8MHwxfHNlYXJjaHwxMHx8ZGlldGF8ZW58MHx8fHwxNzQ4OTExODk2fDA&ixlib=rb-4.1.0&q=85';
-                                                            } else if (containerDietaRow
-                                                                    ?.tipo ==
-                                                                'Desayuno') {
-                                                              return 'https://images.unsplash.com/photo-1506084868230-bb9d95c24759?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NTYyMDF8MHwxfHNlYXJjaHwxMHx8YnJlYWtmYXN0fGVufDB8fHx8MTcyOTQxNzI4M3ww&ixlib=rb-4.0.3&q=80&w=400';
-                                                            } else if (containerDietaRow
-                                                                    ?.tipo ==
-                                                                'Cena') {
-                                                              return 'https://images.unsplash.com/photo-1605926637512-c8b131444a4b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NTYyMDF8MHwxfHNlYXJjaHwxfHxEaW5uZXJ8ZW58MHx8fHwxNzI5NDI1NjYxfDA&ixlib=rb-4.0.3&q=80&w=400';
-                                                            } else {
-                                                              return 'https://images.unsplash.com/photo-1565895405138-6c3a1555da6a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w0NTYyMDF8MHwxfHNlYXJjaHwxMHx8ZGlldGF8ZW58MHx8fHwxNzQ4OTExODk2fDA&ixlib=rb-4.1.0&q=85';
-                                                            }
-                                                          }(),
-                                                          'https://images.unsplash.com/photo-1565895405138-6c3a1555da6a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w0NTYyMDF8MHwxfHNlYXJjaHwxMHx8ZGlldGF8ZW58MHx8fHwxNzQ4OTExODk2fDA&ixlib=rb-4.1.0&q=85',
+                                                border: Border.all(
+                                                  color: GymHubTheme.of(
+                                                          context)
+                                                      .lineColor,
+                                                  width: 1.0,
+                                                ),
+                                              ),
+                                              child: InkWell(
+                                                splashColor: Colors.transparent,
+                                                focusColor: Colors.transparent,
+                                                hoverColor: Colors.transparent,
+                                                highlightColor:
+                                                    Colors.transparent,
+                                                onTap: () async {
+                                                  await showModalBottomSheet(
+                                                    isScrollControlled: true,
+                                                    backgroundColor:
+                                                        Colors.transparent,
+                                                    useSafeArea: true,
+                                                    context: context,
+                                                    builder: (context) {
+                                                      return GestureDetector(
+                                                        onTap: () {
+                                                          FocusScope.of(context)
+                                                              .unfocus();
+                                                          FocusManager.instance
+                                                              .primaryFocus
+                                                              ?.unfocus();
+                                                        },
+                                                        child: Padding(
+                                                          padding: MediaQuery
+                                                              .viewInsetsOf(
+                                                                  context),
+                                                          child:
+                                                              DetalleDietaWidget(
+                                                            comida:
+                                                                columnComidasRow
+                                                                    .id,
+                                                          ),
                                                         ),
-                                                      ).image,
+                                                      );
+                                                    },
+                                                  ).then((value) =>
+                                                      safeSetState(() {}));
+                                                },
+                                                child: Container(
+                                                  width:
+                                                      MediaQuery.sizeOf(context)
+                                                              .width *
+                                                          1.0,
+                                                  decoration: BoxDecoration(
+                                                    gradient: LinearGradient(
+                                                      colors: [
+                                                        Colors.transparent,
+                                                        Colors.black
+                                                      ],
+                                                      stops: [0.0, 1.0],
+                                                      begin:
+                                                          AlignmentDirectional(
+                                                              0.0, -1.0),
+                                                      end: AlignmentDirectional(
+                                                          0, 1.0),
                                                     ),
                                                     borderRadius:
                                                         BorderRadius.circular(
-                                                            10.0),
-                                                    border: Border.all(
-                                                      color:
-                                                          GymHubTheme.of(
-                                                                  context)
-                                                              .lineColor,
-                                                      width: 1.0,
-                                                    ),
+                                                            16.0),
                                                   ),
-                                                  child: InkWell(
-                                                    splashColor:
-                                                        Colors.transparent,
-                                                    focusColor:
-                                                        Colors.transparent,
-                                                    hoverColor:
-                                                        Colors.transparent,
-                                                    highlightColor:
-                                                        Colors.transparent,
-                                                    onTap: () async {
-                                                      context.pushNamed(
-                                                        DetalleDietaWidget
-                                                            .routeName,
-                                                        queryParameters: {
-                                                          'dieta':
-                                                              serializeParam(
-                                                            containerDietaRow
-                                                                ?.id,
-                                                            ParamType.int,
-                                                          ),
-                                                          'dia': serializeParam(
-                                                            functions.obtenerdia(
-                                                                _model
-                                                                    .calendarSelectedDay!
-                                                                    .start),
-                                                            ParamType.String,
-                                                          ),
-                                                        }.withoutNulls,
-                                                      );
-                                                    },
-                                                    child: Container(
-                                                      width: MediaQuery.sizeOf(
-                                                                  context)
-                                                              .width *
-                                                          1.0,
-                                                      decoration: BoxDecoration(
-                                                        gradient:
-                                                            LinearGradient(
-                                                          colors: [
-                                                            Colors.transparent,
-                                                            Colors.black
-                                                          ],
-                                                          stops: [0.0, 1.0],
-                                                          begin:
-                                                              AlignmentDirectional(
-                                                                  0.0, -1.0),
-                                                          end:
-                                                              AlignmentDirectional(
-                                                                  0, 1.0),
+                                                  child: Padding(
+                                                    padding:
+                                                        EdgeInsetsDirectional
+                                                            .fromSTEB(
+                                                                16.0,
+                                                                100.0,
+                                                                16.0,
+                                                                16.0),
+                                                    child: Column(
+                                                      mainAxisSize:
+                                                          MainAxisSize.max,
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment.end,
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        Text(
+                                                          'Tipo: ${columnComidasRow.tipoComida}',
+                                                          style: GymHubTheme
+                                                                  .of(context)
+                                                              .bodyMedium
+                                                              .override(
+                                                                font:
+                                                                    GoogleFonts
+                                                                        .inter(
+                                                                  fontWeight: GymHubTheme.of(
+                                                                          context)
+                                                                      .bodyMedium
+                                                                      .fontWeight,
+                                                                  fontStyle: GymHubTheme.of(
+                                                                          context)
+                                                                      .bodyMedium
+                                                                      .fontStyle,
+                                                                ),
+                                                                fontSize: 18.0,
+                                                                letterSpacing:
+                                                                    0.0,
+                                                                fontWeight: GymHubTheme.of(
+                                                                        context)
+                                                                    .bodyMedium
+                                                                    .fontWeight,
+                                                                fontStyle: GymHubTheme.of(
+                                                                        context)
+                                                                    .bodyMedium
+                                                                    .fontStyle,
+                                                              ),
                                                         ),
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(16.0),
-                                                      ),
-                                                      child: Padding(
-                                                        padding:
-                                                            EdgeInsetsDirectional
-                                                                .fromSTEB(
-                                                                    16.0,
-                                                                    100.0,
-                                                                    16.0,
-                                                                    16.0),
-                                                        child: Column(
-                                                          mainAxisSize:
-                                                              MainAxisSize.max,
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .end,
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .start,
-                                                          children: [
-                                                            Text(
-                                                              'Tipo: ${containerDietaRow?.tipo}',
-                                                              style: GymHubTheme
-                                                                      .of(context)
-                                                                  .bodyMedium
-                                                                  .override(
-                                                                    font: GoogleFonts
+                                                        Text(
+                                                          valueOrDefault<
+                                                              String>(
+                                                            columnComidasRow
+                                                                .nombreComida,
+                                                            'nombre_comida',
+                                                          ),
+                                                          style: GymHubTheme
+                                                                  .of(context)
+                                                              .bodyMedium
+                                                              .override(
+                                                                font:
+                                                                    GoogleFonts
                                                                         .inter(
-                                                                      fontWeight: GymHubTheme.of(
-                                                                              context)
-                                                                          .bodyMedium
-                                                                          .fontWeight,
-                                                                      fontStyle: GymHubTheme.of(
-                                                                              context)
-                                                                          .bodyMedium
-                                                                          .fontStyle,
-                                                                    ),
-                                                                    fontSize:
-                                                                        18.0,
-                                                                    letterSpacing:
-                                                                        0.0,
-                                                                    fontWeight: GymHubTheme.of(
-                                                                            context)
-                                                                        .bodyMedium
-                                                                        .fontWeight,
-                                                                    fontStyle: GymHubTheme.of(
-                                                                            context)
-                                                                        .bodyMedium
-                                                                        .fontStyle,
-                                                                  ),
-                                                            ),
-                                                            Text(
-                                                              'Enfoque: ${dietasdiariasItem.enfoque}',
-                                                              style: GymHubTheme
-                                                                      .of(context)
-                                                                  .bodyMedium
-                                                                  .override(
-                                                                    font: GoogleFonts
-                                                                        .inter(
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .w500,
-                                                                      fontStyle: GymHubTheme.of(
-                                                                              context)
-                                                                          .bodyMedium
-                                                                          .fontStyle,
-                                                                    ),
-                                                                    fontSize:
-                                                                        12.0,
-                                                                    letterSpacing:
-                                                                        0.0,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w500,
-                                                                    fontStyle: GymHubTheme.of(
-                                                                            context)
-                                                                        .bodyMedium
-                                                                        .fontStyle,
-                                                                  ),
-                                                            ),
-                                                            Text(
-                                                              dietasdiariasItem
-                                                                  .titulo!,
-                                                              style: GymHubTheme
-                                                                      .of(context)
-                                                                  .bodyMedium
-                                                                  .override(
-                                                                    font: GoogleFonts
-                                                                        .inter(
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .w600,
-                                                                      fontStyle: GymHubTheme.of(
-                                                                              context)
-                                                                          .bodyMedium
-                                                                          .fontStyle,
-                                                                    ),
-                                                                    fontSize:
-                                                                        14.0,
-                                                                    letterSpacing:
-                                                                        0.0,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w600,
-                                                                    fontStyle: GymHubTheme.of(
-                                                                            context)
-                                                                        .bodyMedium
-                                                                        .fontStyle,
-                                                                  ),
-                                                            ),
-                                                          ].divide(SizedBox(
-                                                              height: 8.0)),
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w500,
+                                                                  fontStyle: GymHubTheme.of(
+                                                                          context)
+                                                                      .bodyMedium
+                                                                      .fontStyle,
+                                                                ),
+                                                                fontSize: 12.0,
+                                                                letterSpacing:
+                                                                    0.0,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w500,
+                                                                fontStyle: GymHubTheme.of(
+                                                                        context)
+                                                                    .bodyMedium
+                                                                    .fontStyle,
+                                                              ),
                                                         ),
-                                                      ),
+                                                      ].divide(SizedBox(
+                                                          height: 8.0)),
                                                     ),
                                                   ),
                                                 ),
-                                              );
-                                            },
+                                              ),
+                                            ),
                                           );
                                         }).divide(SizedBox(height: 16.0)),
                                       );
