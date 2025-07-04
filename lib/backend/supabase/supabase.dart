@@ -18,7 +18,7 @@ class SupaFlow {
   static Future initialize() => Supabase.initialize(
         url: _kSupabaseUrl,
         headers: {
-          'X-Client-Info': 'flutterflow',
+          'X-Client-Info': 'GymHub',
         },
         anonKey: _kSupabaseAnonKey,
         debug: false,

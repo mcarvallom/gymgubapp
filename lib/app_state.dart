@@ -50,6 +50,8 @@ String _idUsuario = '';
   }
   bool _nohacenada = false;
   bool get nohacenada => _nohacenada;
+
+  set email(String email) {}
   set nohacenada(bool value) {
     _nohacenada = value;
     prefs.setBool('ff_nohacenada', value);

@@ -1,5 +1,6 @@
+import 'package:gymhub_app/gymhub/gymhub_theme.dart';
+
 import '/auth/supabase_auth/auth_util.dart';
-import '/gymhub/gymhub_theme.dart';
 import '/gymhub/gymhub_util.dart';
 import '/gymhub/gymhub_widgets.dart';
 import '/index.dart';

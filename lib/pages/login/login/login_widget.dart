@@ -1,5 +1,6 @@
+import 'package:gymhub_app/gymhub/gymhub_theme.dart';
+
 import '/auth/supabase_auth/auth_util.dart';
-import '/gymhub/gymhub_theme.dart';
 import '/gymhub/gymhub_util.dart';
 import '/gymhub/gymhub_widgets.dart';
 import '/index.dart';
@@ -191,6 +192,9 @@ class _LoginWidgetState extends State<LoginWidget>
                                                             focusNode: _model
                                                                 .emailFocusNode,
                                                             autofocus: false,
+                                                            textInputAction:
+                                                                TextInputAction
+                                                                    .next,
                                                             obscureText: false,
                                                             decoration:
                                                                 InputDecoration(
@@ -364,7 +368,56 @@ class _LoginWidgetState extends State<LoginWidget>
                                                                 .contraseaTextController,
                                                             focusNode: _model
                                                                 .contraseaFocusNode,
+                                                            onFieldSubmitted:
+                                                                (_) async {
+                                                              if (_model.formKey
+                                                                          .currentState ==
+                                                                      null ||
+                                                                  !_model
+                                                                      .formKey
+                                                                      .currentState!
+                                                                      .validate()) {
+                                                                return;
+                                                              }
+                                                              GoRouter.of(
+                                                                      context)
+                                                                  .prepareAuthEvent();
+
+                                                              final user =
+                                                                  await authManager
+                                                                      .signInWithEmail(
+                                                                context,
+                                                                _model
+                                                                    .emailTextController
+                                                                    .text,
+                                                                _model
+                                                                    .contraseaTextController
+                                                                    .text,
+                                                              );
+                                                              if (user ==
+                                                                  null) {
+                                                                return;
+                                                              }
+
+                                                              GHAppState()
+                                                                      .idUsuario =
+                                                                  currentUserUid;
+                                                              GHAppState()
+                                                                      .email =
+                                                                  currentUserEmail;
+                                                              safeSetState(
+                                                                  () {});
+
+                                                              context.goNamedAuth(
+                                                                  InicioWidget
+                                                                      .routeName,
+                                                                  context
+                                                                      .mounted);
+                                                            },
                                                             autofocus: false,
+                                                            textInputAction:
+                                                                TextInputAction
+                                                                    .go,
                                                             obscureText: !_model
                                                                 .contraseaVisibility,
                                                             decoration:
@@ -550,6 +603,14 @@ class _LoginWidgetState extends State<LoginWidget>
                                                         ),
                                                         GHButtonWidget(
                                                           onPressed: () async {
+                                                            if (_model.formKey
+                                                                        .currentState ==
+                                                                    null ||
+                                                                !_model.formKey
+                                                                    .currentState!
+                                                                    .validate()) {
+                                                              return;
+                                                            }
                                                             GoRouter.of(context)
                                                                 .prepareAuthEvent();
 
@@ -567,6 +628,13 @@ class _LoginWidgetState extends State<LoginWidget>
                                                             if (user == null) {
                                                               return;
                                                             }
+
+                                                            GHAppState()
+                                                                    .idUsuario =
+                                                                currentUserUid;
+                                                            GHAppState().email =
+                                                                currentUserEmail;
+                                                            safeSetState(() {});
 
                                                             context.goNamedAuth(
                                                                 InicioWidget
@@ -639,10 +707,9 @@ class _LoginWidgetState extends State<LoginWidget>
                                                           highlightColor: Colors
                                                               .transparent,
                                                           onTap: () async {
-                                                            if (/* NOT RECOMMENDED */ _model
-                                                                    .emailTextController
-                                                                    .text ==
-                                                                'true') {
+                                                            if (_model.emailTextController
+                                                                        .text !=
+                                                                    '') {
                                                               if (_model
                                                                   .emailTextController
                                                                   .text
@@ -667,7 +734,7 @@ class _LoginWidgetState extends State<LoginWidget>
                                                                 context:
                                                                     context,
                                                                 redirectTo:
-                                                                    "https://gymhub.restify.cl/resetContrasenna",
+                                                                    "gymhubapp://gymhubapp.com/resetContrasenna",
                                                               );
                                                             } else {
                                                               await showDialog(
@@ -679,7 +746,7 @@ class _LoginWidgetState extends State<LoginWidget>
                                                                     title: Text(
                                                                         'Mensaje'),
                                                                     content: Text(
-                                                                        'Ingresa tu correo'),
+                                                                        'Ingresa un correo electrónico.'),
                                                                     actions: [
                                                                       TextButton(
                                                                         onPressed:
